@@ -10,19 +10,19 @@ import (
 )
 
 func main() {
-	// Загружаем конфиг
+	//загружаем конфиг
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{
-			Address:     "0.0.0.0:8081", // порт сервиса
+			Address:     "0.0.0.0:8081", //порт сервиса
 			Timeout:     5 * time.Second,
 			IdleTimeout: 60 * time.Second,
 		},
 	}
 
-	// Роутер
+	//роутер
 	mux := http.NewServeMux()
 
-	// Простейший эндпоинт
+	//простейший эндпоинт
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "pong from user-service")
@@ -33,7 +33,9 @@ func main() {
 		fmt.Fprint(w, "ok")
 	})
 
-	// Создаем сервер
+	mux.HandleFunc("api/users/register", RegisterHandler)
+
+	//создаем сервер
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
 		Handler:      mux,

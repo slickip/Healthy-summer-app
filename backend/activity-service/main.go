@@ -10,25 +10,21 @@ import (
 )
 
 func main() {
-	// Загружаем конфиг
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{
-			Address:     "0.0.0.0:8082", // порт сервиса
+			Address:     "0.0.0.0:8082",
 			Timeout:     5 * time.Second,
 			IdleTimeout: 60 * time.Second,
 		},
 	}
 
-	// Роутер
 	mux := http.NewServeMux()
 
-	// Простейший эндпоинт
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "pong from activity-service")
 	})
 
-	// Создаем сервер
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
 		Handler:      mux,

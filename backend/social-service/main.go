@@ -10,25 +10,25 @@ import (
 )
 
 func main() {
-	// Загружаем конфиг
+	//загружаем конфиг
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{
-			Address:     "0.0.0.0:8084", // порт сервиса
+			Address:     "0.0.0.0:8084", //порт сервиса
 			Timeout:     5 * time.Second,
 			IdleTimeout: 60 * time.Second,
 		},
 	}
 
-	// Роутер
+	//роутер
 	mux := http.NewServeMux()
 
-	// Простейший эндпоинт
+	//простейший эндпоинт
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "pong from social-service")
 	})
 
-	// Создаем сервер
+	//создаем сервер
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
 		Handler:      mux,
