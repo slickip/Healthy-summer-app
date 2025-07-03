@@ -1,3 +1,3 @@
-module github.com/slickip/Healthy-summer-app/tree/main/backend/activity-service
+module github.com/slickip/Healthy-summer-app/backend/activity-service
 
 go 1.24.1

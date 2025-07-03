@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/slickip/Healthy-summer-app/tree/main/backend/nutrition-service/internal/config"
+	"github.com/slickip/Healthy-summer-app/backend/nutrition-service/internal/config"
 )
 
 func main() {
