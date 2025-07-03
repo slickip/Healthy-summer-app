@@ -25,7 +25,7 @@ func main() {
 	// Простейший эндпоинт
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "pong from activity-service")
+		fmt.Fprint(w, "pong from social-service")
 	})
 
 	// Создаем сервер
