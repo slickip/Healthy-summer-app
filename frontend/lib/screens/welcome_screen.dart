@@ -48,7 +48,6 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Например, переход на LoginScreen
                     Navigator.pushNamed(context, '/login');
                   },
                   child: const Text(

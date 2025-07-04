@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"database/sql"
@@ -29,9 +29,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Здесь должна быть логика сохранения пользователя в БД
-	// Например:
-	// id, err := SaveUser(req.Email, req.Password)
 	db, err := sql.Open("postgres", "postgres://healthyuser:healthypass@localhost:5433/healthydb?sslmode=disable")
 	if err != nil {
 		http.Error(w, "Database connection failed", http.StatusInternalServerError)
@@ -72,5 +69,3 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
-
-func LoginHandler(w http.ResponseWriter, r *http.Request)
