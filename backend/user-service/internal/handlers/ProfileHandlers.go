@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"user-service/internal/models"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 
 	"gorm.io/gorm"
 )

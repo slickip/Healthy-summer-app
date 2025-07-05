@@ -55,6 +55,12 @@ class WelcomeScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/register');
+                  },
+                  child: const Text('Register'),
+                ),
               ],
             ),
           ),

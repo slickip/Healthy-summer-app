@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"user-service/internal/config"
-	"user-service/internal/handlers"
-	"user-service/internal/models"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/config"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/handlers"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -28,9 +28,9 @@ func main() {
 	// Подключаемся к базе
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
-		getEnv("DB_HOST", "localhost"),
-		getEnv("DB_USER", "postgres"),
-		getEnv("DB_PASSWORD", "postgres"),
+		getEnv("DB_HOST", "postgres"),
+		getEnv("DB_USER", "healthyuser"),
+		getEnv("DB_PASSWORD", "healthypass"),
 		getEnv("DB_NAME", "healthydb"),
 		getEnv("DB_PORT", "5432"),
 	)

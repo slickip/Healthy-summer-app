@@ -17,7 +17,7 @@ type RegisterResponse struct {
 	UserID int64 `json:"user_id"`
 }
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
