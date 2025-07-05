@@ -25,16 +25,6 @@ func main() {
 		},
 	}
 
-	// Подключаемся к базе
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
-		getEnv("DB_HOST", "postgres"),
-		getEnv("DB_USER", "healthyuser"),
-		getEnv("DB_PASSWORD", "healthypass"),
-		getEnv("DB_NAME", "healthydb"),
-		getEnv("DB_PORT", "5432"),
-	)
-
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
