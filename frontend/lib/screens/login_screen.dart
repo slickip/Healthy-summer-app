@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -10,14 +12,35 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final ApiService _api = ApiService();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  void _login() {
-    // Здесь будет логика авторизации
-    final email = _emailController.text;
-    final password = _passwordController.text;
+  bool _loading = false;
+  String? _error;
 
-    // Для примера просто печатаем
-    print('Logging in with email: $email, password: $password');
+  Future<void> _login() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    final token = await _api.login(
+      _emailController.text,
+      _passwordController.text,
+    );
+
+    if (token != null) {
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      setState(() {
+        _error = 'Invalid email or password';
+      });
+    }
+
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
@@ -69,7 +92,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  if (_error != null)
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange[600],
@@ -81,11 +107,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _login,
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
+                    onPressed: _loading ? null : _login,
+                    child: _loading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Login',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
                   ),
                 ],
               ),

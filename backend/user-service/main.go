@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/config"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/db"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/handlers"
-	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -25,19 +21,11 @@ func main() {
 		},
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
-	}
-
-	// Автомиграция
-	if err := db.AutoMigrate(&models.User{}); err != nil {
-		log.Fatalf("failed to migrate: %v", err)
-	}
+	database := db.New()
 
 	// Создаем структуру с зависимостями
 	h := &handlers.Handler{
-		DB: db,
+		DB: database,
 	}
 
 	// Роутер
@@ -52,6 +40,22 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "ok")
 	})
+	corsHandler := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			// Браузер отправляет preflight-запрос методом OPTIONS
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			// Передаем управление mux
+			h.ServeHTTP(w, r)
+		})
+	}
 
 	// Роуты с зависимостями
 	mux.HandleFunc("/api/users/register", h.RegisterHandler)
@@ -61,7 +65,7 @@ func main() {
 	// Сервер
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
-		Handler:      mux,
+		Handler:      corsHandler(mux),
 		ReadTimeout:  cfg.HTTPServer.Timeout,
 		WriteTimeout: cfg.HTTPServer.Timeout,
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
@@ -71,13 +75,4 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed: %s", err)
 	}
-}
-
-// getEnv возвращает значение переменной окружения или дефолт
-func getEnv(key, fallback string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		return fallback
-	}
-	return val
 }

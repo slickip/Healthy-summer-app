@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/api_service.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -14,7 +12,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _displayNameController = TextEditingController();
-  final _storage = const FlutterSecureStorage();
+  final _api = ApiService();
 
   bool _loading = false;
   String? _error;
@@ -25,26 +23,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _error = null;
     });
 
-    final response = await http.post(
-      Uri.parse('http://localhost:8081/api/users/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': _emailController.text,
-        'password': _passwordController.text,
-        'display_name': _displayNameController.text,
-      }),
+    final success = await _api.register(
+      _emailController.text,
+      _passwordController.text,
+      _displayNameController.text,
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final token = data['token'];
-      await _storage.write(key: 'jwt_token', value: token);
-
+    if (success) {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       setState(() {
-        _error = 'Registration failed';
+        _error = 'Registration failed. Please try again.';
       });
     }
 
@@ -61,7 +51,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         backgroundColor: Colors.orange[700],
         title: const Text('Register'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -78,26 +68,41 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             const SizedBox(height: 24),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: Colors.orange[700]),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Password',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: Colors.orange[700]),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _displayNameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Display Name',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: Colors.orange[700]),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -111,11 +116,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange[700],
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: _loading ? null : _register,
               child: _loading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Register', style: TextStyle(fontSize: 18)),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Register',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
             ),
           ],
         ),

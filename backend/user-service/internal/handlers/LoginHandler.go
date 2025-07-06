@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,7 @@ type LoginResponse struct {
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
 	var req LoginRequest
@@ -37,46 +39,39 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("postgres", "postgres://healthyuser:healthypass@localhost:5433/healthydb?sslmode=disable")
-	if err != nil {
-		http.Error(w, "Database connection failed", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	var (
-		userID        int64
-		password_hash string
-	)
-	err = db.QueryRow("SELECT id, password_hash FROM users WHERE email=$1", req.Email).Scan(&userID, &password_hash)
-	if err == sql.ErrNoRows {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		http.Error(w, "Error fetching user", http.StatusInternalServerError)
+	// Находим пользователя по email
+	var user models.User
+	if err := h.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Error fetching user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(req.Password)) != nil {
+	// Проверяем пароль
+	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)) != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
+	// Генерируем JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(), // токен живет сутки
+		"user_id": user.ID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	tokenString, err := token.SignedString(jwtSECRET_KEY)
 	if err != nil {
-		http.Error(w, "Error generating token", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Error generating token: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Возвращаем токен
 	resp := LoginResponse{
 		Token: tokenString,
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 
@@ -22,9 +23,20 @@ func New() *gorm.DB {
 		getEnv("DB_PORT", "5432"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	var db *gorm.DB
+	var err error
+
+	// 5 попыток подключения
+	for i := 0; i < 5; i++ {
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err == nil {
+			break
+		}
+		log.Printf("Database not ready yet (attempt %d/5): %v", i+1, err)
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		log.Fatalf("failed to connect database after retries: %v", err)
 	}
 
 	if err := db.AutoMigrate(
@@ -36,7 +48,6 @@ func New() *gorm.DB {
 	}
 
 	log.Println("Database connected and migrated successfully")
-
 	return db
 }
 
