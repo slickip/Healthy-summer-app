@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/activities_screen.dart';
+import 'package:frontend/screens/activity_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/registration_screen.dart';
@@ -22,6 +24,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegistrationScreen(),
         '/home': (context) => const HomeScreen(),
+        '/activities': (context) => const ActivitiesScreen(),
+        '/add_activity': (context) => const AddActivityScreen(),
       },
     );
   }

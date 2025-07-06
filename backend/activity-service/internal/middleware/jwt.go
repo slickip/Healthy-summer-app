@@ -12,7 +12,7 @@ import (
 type contextKey string
 
 const (
-	JWT_SECRET       = "your_super_secret_key" // замени на свой ключ
+	JWT_SECRET       = "OMGMYKEY" // замени на свой ключ
 	ContextUserIDKey = contextKey("userID")
 )
 

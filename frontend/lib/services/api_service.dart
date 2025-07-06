@@ -50,10 +50,58 @@ class ApiService {
 
   Future<Map<String, dynamic>?> getProfile() async {
     final token = await _storage.read(key: 'jwt_token');
+    print("Token being sent: $token");
     if (token == null) return null;
 
     final response = await http.get(
       Uri.parse('$_baseUrl/users/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      return null;
+    }
+  }
+
+  Future<bool> createActivity({
+    required String type,
+    required int duration,
+    required String intensity,
+    required String location,
+  }) async {
+    final token = await _storage.read(key: 'jwt_token');
+    print("Token being sent: $token");
+    if (token == null) return false;
+
+    final response = await http.post(
+      Uri.parse('http://localhost:8082/api/activities'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'type': type,
+        'duration': duration,
+        'intensity': intensity,
+        'location': location,
+      }),
+    );
+
+    return response.statusCode == 201;
+  }
+
+  Future<List<dynamic>?> getActivities() async {
+    final token = await _storage.read(key: 'jwt_token');
+    print("Token being sent: $token");
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('http://localhost:8082/api/activities'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

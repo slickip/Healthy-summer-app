@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/middleware"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 
 	"gorm.io/gorm"
 )
 
-var jwtSecret = []byte("your_secret_key")
+var jwtSecret = []byte("OMGMYKEY")
 
 type ProfileResponse struct {
 	UserID      uint   `json:"user_id"`
@@ -33,11 +34,12 @@ func (h *Handler) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 // getProfile отдает данные профиля
 func (h *Handler) getProfile(w http.ResponseWriter, r *http.Request) {
-	userID, err := extractUserIDFromToken(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+	uidVal := r.Context().Value(middleware.ContextUserIDKey)
+	if uidVal == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	userID := uidVal.(uint)
 
 	var user models.User
 	if err := h.DB.First(&user, userID).Error; err != nil {
@@ -60,11 +62,12 @@ func (h *Handler) getProfile(w http.ResponseWriter, r *http.Request) {
 
 // updateProfile обновляет профиль
 func (h *Handler) updateProfile(w http.ResponseWriter, r *http.Request) {
-	userID, err := extractUserIDFromToken(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+	uidVal := r.Context().Value(middleware.ContextUserIDKey)
+	if uidVal == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	userID := uidVal.(uint)
 
 	var req struct {
 		DisplayName string `json:"display_name"`

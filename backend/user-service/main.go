@@ -9,6 +9,7 @@ import (
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/config"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/db"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/handlers"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/middleware"
 )
 
 func main() {
@@ -60,7 +61,7 @@ func main() {
 	// Роуты с зависимостями
 	mux.HandleFunc("/api/users/register", h.RegisterHandler)
 	mux.HandleFunc("/api/users/login", h.LoginHandler)
-	mux.HandleFunc("/api/users/profile", h.ProfileHandler)
+	mux.Handle("/api/users/profile", middleware.JWTAuth(http.HandlerFunc(h.ProfileHandler)))
 
 	// Сервер
 	srv := &http.Server{

@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -39,7 +40,7 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Находим пользователя по email
+	// 1) Находим пользователя по email
 	var user models.User
 	if err := h.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -50,28 +51,31 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем пароль
+	// 2) Проверяем пароль
 	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)) != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
-	// Генерируем JWT
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	// ────────────────────────────────────────────────────────────────
+	// 3) Здесь вставляем код генерации JWT — ровно после проверки пароля
+	// ────────────────────────────────────────────────────────────────
+
+	// Формируем claims
+	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-
+	}
+	// Создаём токен
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	// Подписываем
 	tokenString, err := token.SignedString(jwtSECRET_KEY)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error generating token: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Возвращаем токен
-	resp := LoginResponse{
-		Token: tokenString,
-	}
+	// 4) Возвращаем клиенту JWT
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(LoginResponse{Token: tokenString})
 }
