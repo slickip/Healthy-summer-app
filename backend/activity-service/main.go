@@ -20,14 +20,33 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	corsHandler := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			// Браузер отправляет preflight-запрос методом OPTIONS
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			// Передаем управление mux
+			h.ServeHTTP(w, r)
+		})
+	}
+
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "pong from activity-service")
 	})
 
+	mux.Handle("/api/users/profile", middleware.JWTAuth(http.HandlerFunc(handler.ProfileHandler)))
+
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
-		Handler:      mux,
+		Handler:      corsHandler(mux),
 		ReadTimeout:  cfg.HTTPServer.Timeout,
 		WriteTimeout: cfg.HTTPServer.Timeout,
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
