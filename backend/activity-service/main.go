@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/slickip/Healthy-summer-app/backend/activity-service/internal/config"
+	"github.com/slickip/Healthy-summer-app/backend/activity-service/internal/db"
+	"github.com/slickip/Healthy-summer-app/backend/activity-service/internal/handlers"
 	"github.com/slickip/Healthy-summer-app/backend/activity-service/internal/middleware"
 )
 
@@ -17,6 +19,13 @@ func main() {
 			Timeout:     5 * time.Second,
 			IdleTimeout: 60 * time.Second,
 		},
+	}
+
+	database := db.New()
+
+	// Создаем структуру с зависимостями
+	h := &handlers.ActivityHandler{
+		DB: database,
 	}
 
 	mux := http.NewServeMux()
@@ -43,7 +52,7 @@ func main() {
 		fmt.Fprint(w, "pong from activity-service")
 	})
 
-	mux.Handle("/api/users/profile", middleware.JWTAuth(http.HandlerFunc(handler.ActivityHandler)))
+	mux.Handle("/api/activities", middleware.JWTAuth(http.HandlerFunc(h.ActiveHandler)))
 
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,

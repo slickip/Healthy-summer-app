@@ -15,15 +15,14 @@ type ActivityHandler struct {
 
 // Request payload
 type CreateActivityRequest struct {
-	UserID    uint   `json:"user_id"` // если используешь JWT, можно брать из токена
-	Type      string `json:"type"`
-	Duration  int    `json:"duration"`
-	Intensity string `json:"intensity"`
-	Calories  int    `json:"calories"`
-	Location  string `json:"location"`
+	UserID         uint   `json:"user_id"` // если используешь JWT, можно брать из токена
+	ActivityTypeID uint   `json:"activity_type_id"`
+	Duration       int    `json:"duration"`
+	Intensity      string `json:"intensity"`
+	Calories       int    `json:"calories"`
 }
 
-func (h *ActivityHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *ActivityHandler) ActiveHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		h.CreateActivity(w, r)
@@ -43,18 +42,34 @@ func (h *ActivityHandler) CreateActivity(w http.ResponseWriter, r *http.Request)
 	}
 	userIDFromContext := userIDValue.(uint)
 
-	var req CreateActivityRequest
+	// Теперь ждем activity_type_id вместо type
+	var req struct {
+		ActivityTypeID uint   `json:"activity_type_id"`
+		Duration       int    `json:"duration"`
+		Intensity      string `json:"intensity"`
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
+	// Достаем ActivityType из базы
+	var at models.ActivityType
+	if err := h.DB.First(&at, req.ActivityTypeID).Error; err != nil {
+		http.Error(w, "Invalid activity type", http.StatusBadRequest)
+		return
+	}
+
+	// Считаем калории
+	totalCalories := req.Duration * at.CaloriesPerMinute
+
 	activity := models.Activity{
-		UserID:    userIDFromContext,
-		Type:      req.Type,
-		Duration:  req.Duration,
-		Intensity: req.Intensity,
-		Calories:  req.Calories,
+		UserID:         userIDFromContext,
+		ActivityTypeID: req.ActivityTypeID,
+		Duration:       req.Duration,
+		Intensity:      req.Intensity,
+		Calories:       totalCalories,
 	}
 
 	if err := h.DB.Create(&activity).Error; err != nil {
@@ -77,6 +92,7 @@ func (h *ActivityHandler) ListActivities(w http.ResponseWriter, r *http.Request)
 
 	var activities []models.Activity
 	if err := h.DB.
+		Preload("ActivityType").
 		Where("user_id = ?", userID).
 		Order("created_at desc").
 		Find(&activities).Error; err != nil {

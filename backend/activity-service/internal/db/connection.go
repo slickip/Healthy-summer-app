@@ -41,6 +41,7 @@ func New() *gorm.DB {
 	if err := db.AutoMigrate(
 		&models.Activity{},
 		&models.Steps{},
+		&models.ActivityType{},
 	); err != nil {
 		log.Fatalf("failed to migrate: %v", err)
 	}
