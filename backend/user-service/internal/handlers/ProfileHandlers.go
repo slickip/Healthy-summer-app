@@ -6,13 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/middleware"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/middleware"
 
 	"gorm.io/gorm"
 )
-
-var jwtSecret = []byte("OMGMYKEY")
 
 type ProfileResponse struct {
 	UserID      uint   `json:"user_id"`

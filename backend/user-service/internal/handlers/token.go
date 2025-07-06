@@ -22,7 +22,7 @@ func extractUserIDFromToken(r *http.Request) (uint, error) {
 		if t.Method != jwt.SigningMethodHS256 {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return jwtSecret, nil
+		return JWTSecret, nil
 	})
 	if err != nil || !tok.Valid {
 		return 0, errors.New("Invalid token")
