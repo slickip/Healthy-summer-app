@@ -3,12 +3,14 @@ package models
 import "time"
 
 type Activity struct {
-	id           uint `gorm:"primaryKey"`
-	user_id      uint `gorm:"not null"`
-	duration_min uint
-	intensity    string    `gorm:"type:text;not null;check:intensity IN ('low','medium','high')"`
-	StartedAt    time.Time `gorm:"default:now()"`
-	EndedAt      time.Time `gorm:"default:now()"`
+	ID        uint   `gorm:"primaryKey"`
+	UserID    uint   `gorm:"not null"`
+	Type      string `gorm:"not null"`
+	Duration  int
+	Intensity string `gorm:"type:text;not null;check:intensity IN ('low','medium','high')"`
+	Calories  int
+	StartedAt time.Time `gorm:"default:now()"`
+	EndedAt   time.Time `gorm:"default:now()"`
 }
 
 func (Activity) TableName() string {
@@ -16,10 +18,10 @@ func (Activity) TableName() string {
 }
 
 type Steps struct {
-	id        uint      `gorm:"primaryKey"`
-	user_id   uint      `gorm:"not null"`
-	step_cout int       `gorm:"not null"`
-	date      time.Time `gorm:"type:date"`
+	ID        uint      `gorm:"primaryKey"`
+	UserID    uint      `gorm:"not null"`
+	StepCount int       `gorm:"not null"`
+	Date      time.Time `gorm:"type:date"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 }
 

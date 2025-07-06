@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/slickip/Healthy-summer-app/backend/activity-service/internal/config"
+	"github.com/slickip/Healthy-summer-app/backend/activity-service/internal/middleware"
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 		fmt.Fprint(w, "pong from activity-service")
 	})
 
-	mux.Handle("/api/users/profile", middleware.JWTAuth(http.HandlerFunc(handler.ProfileHandler)))
+	mux.Handle("/api/users/profile", middleware.JWTAuth(http.HandlerFunc(handler.ActivityHandler)))
 
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
