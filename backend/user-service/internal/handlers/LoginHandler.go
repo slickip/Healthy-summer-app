@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/middleware"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -16,8 +16,6 @@ import (
 type Handler struct {
 	DB *gorm.DB
 }
-
-var jwtSECRET_KEY = []byte("OMGMYKEY")
 
 type LoginRequest struct {
 	Email    string `json:"email"`
@@ -29,6 +27,7 @@ type LoginResponse struct {
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -69,7 +68,7 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Создаём токен
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Подписываем
-	tokenString, err := token.SignedString(jwtSECRET_KEY)
+	tokenString, err := token.SignedString([]byte(middleware.JWTSecret))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error generating token: %v", err), http.StatusInternalServerError)
 		return

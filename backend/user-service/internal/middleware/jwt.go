@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -37,11 +38,20 @@ func ParseToken(r *http.Request) (uint, error) {
 		return 0, errors.New("Invalid token")
 	}
 	claims := tkn.Claims.(jwt.MapClaims)
-	uidFloat, ok := claims["user_id"].(float64)
-	if !ok {
+	var userID uint
+	switch v := claims["user_id"].(type) {
+	case float64:
+		userID = uint(v)
+	case string:
+		uid64, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return 0, errors.New("Invalid user_id claim")
+		}
+		userID = uint(uid64)
+	default:
 		return 0, errors.New("Invalid user_id claim")
 	}
-	return uint(uidFloat), nil
+
 }
 
 // JWTAuth — middleware, кладёт userID в контекст или возвращает 401

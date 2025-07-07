@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,6 +22,7 @@ const (
 func JWTAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
+		log.Println("Auth header:", authHeader)
 		if authHeader == "" {
 			http.Error(w, "Missing Authorization header", http.StatusUnauthorized)
 			return
@@ -35,9 +38,11 @@ func JWTAuth(next http.Handler) http.Handler {
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// Проверяем метод подписи
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, http.ErrAbortHandler
+
+			if token.Method != jwt.SigningMethodHS256 {
+				return nil, jwt.ErrSignatureInvalid
 			}
+
 			return []byte(JWT_SECRET), nil
 		})
 		if err != nil || !token.Valid {
@@ -51,16 +56,29 @@ func JWTAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		userIDFloat, ok := claims["user_id"].(float64)
-		if !ok {
+		// Универсальная проверка user_id
+		var userID uint
+
+		switch v := claims["user_id"].(type) {
+		case float64:
+			userID = uint(v)
+		case string:
+			uid64, err := strconv.ParseUint(v, 10, 64)
+			if err != nil {
+				http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+				log.Printf("Claims: %+v\n", claims)
+				return
+			}
+			userID = uint(uid64)
+		default:
 			http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+			log.Printf("Claims: %+v\n", claims)
 			return
 		}
-		userID := uint(userIDFloat)
 
 		// Добавляем userID в контекст
 		ctx := context.WithValue(r.Context(), ContextUserIDKey, userID)
-
+		log.Printf("user_id raw: %+v\n", claims["user_id"])
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
