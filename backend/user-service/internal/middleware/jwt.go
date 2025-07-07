@@ -38,6 +38,7 @@ func ParseToken(r *http.Request) (uint, error) {
 		return 0, errors.New("Invalid token")
 	}
 	claims := tkn.Claims.(jwt.MapClaims)
+
 	var userID uint
 	switch v := claims["user_id"].(type) {
 	case float64:
@@ -51,6 +52,7 @@ func ParseToken(r *http.Request) (uint, error) {
 	default:
 		return 0, errors.New("Invalid user_id claim")
 	}
+	return userID, nil
 
 }
 

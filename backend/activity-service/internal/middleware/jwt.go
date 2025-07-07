@@ -37,21 +37,25 @@ func JWTAuth(next http.Handler) http.Handler {
 		tokenString := parts[1]
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Проверяем метод подписи
-
 			if token.Method != jwt.SigningMethodHS256 {
 				return nil, jwt.ErrSignatureInvalid
 			}
-
 			return []byte(JWT_SECRET), nil
 		})
-		if err != nil || !token.Valid {
+		if err != nil {
+			log.Printf("[JWTAuth] parse error: %v", err)
+			http.Error(w, "Invalid token: "+err.Error(), http.StatusUnauthorized)
+			return
+		}
+		if !token.Valid {
+			log.Printf("[JWTAuth] token invalid, claims=%+v", token.Claims)
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
+			log.Printf("[JWTAuth] cannot cast claims: %+v", token.Claims)
 			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
 			return
 		}
