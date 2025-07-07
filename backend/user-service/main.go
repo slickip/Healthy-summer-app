@@ -9,7 +9,7 @@ import (
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/config"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/db"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/handlers"
-	"github.com/slickip/Healthy-summer-app/backend/user-service/middleware"
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/middleware"
 )
 
 func main() {
