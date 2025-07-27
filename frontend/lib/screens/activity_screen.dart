@@ -20,6 +20,13 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
   final List<String> _types = ['running', 'cycling', 'swimming', 'yoga'];
   final List<String> _intensities = ['low', 'medium', 'high'];
 
+  final Map<String, int> _typeToId = {
+    'running': 1,
+    'cycling': 2,
+    'swimming': 3,
+    'yoga': 4,
+  };
+
   Future<void> _submit() async {
     setState(() {
       _loading = true;
@@ -27,10 +34,9 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
     });
 
     final success = await api.createActivity(
-      type: _selectedType,
+      activityTypeId: _typeToId[_selectedType]!,
       duration: int.tryParse(_durationController.text) ?? 0,
       intensity: _selectedIntensity,
-      location: '', // можешь добавить поле для ввода, если нужно
     );
 
     if (success) {

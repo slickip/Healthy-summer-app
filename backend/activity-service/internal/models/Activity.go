@@ -11,12 +11,13 @@ type Activity struct {
 	Calories       int
 	StartedAt      time.Time `gorm:"default:now()"`
 	EndedAt        time.Time `gorm:"default:now()"`
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
 
 	ActivityType ActivityType `gorm:"foreignKey:ActivityTypeID"`
 }
 
 func (Activity) TableName() string {
-	return "ativities"
+	return "activities"
 }
 
 type Steps struct {

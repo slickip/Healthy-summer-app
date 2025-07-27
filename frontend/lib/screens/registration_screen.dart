@@ -23,13 +23,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _error = null;
     });
 
-    final success = await _api.register(
+    final result = await _api.register(
       _emailController.text,
       _passwordController.text,
       _displayNameController.text,
     );
 
-    if (success) {
+    if (result != null) {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
     } else {

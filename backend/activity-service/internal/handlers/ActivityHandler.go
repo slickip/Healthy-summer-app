@@ -100,5 +100,24 @@ func (h *ActivityHandler) ListActivities(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	json.NewEncoder(w).Encode(activities)
+	type ActivityResponse struct {
+		ID        uint   `json:"id"`
+		Type      string `json:"type"`
+		Duration  int    `json:"duration"`
+		Intensity string `json:"intensity"`
+		Calories  int    `json:"calories"`
+	}
+
+	var resp []ActivityResponse
+	for _, a := range activities {
+		resp = append(resp, ActivityResponse{
+			ID:        a.ID,
+			Type:      a.ActivityType.Name,
+			Duration:  a.Duration,
+			Intensity: a.Intensity,
+			Calories:  a.Calories,
+		})
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }

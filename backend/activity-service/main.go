@@ -23,6 +23,9 @@ func main() {
 
 	database := db.New()
 
+	// Засеиваем таблицу activity_type
+	db.SeedActivityType(database)
+
 	// Создаем структуру с зависимостями
 	h := &handlers.ActivityHandler{
 		DB: database,

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/middleware"
 	"github.com/slickip/Healthy-summer-app/backend/user-service/internal/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,7 +18,11 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	UserID uint `json:"user_id"`
+	UserID       uint   `json:"user_id"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	TokenType    string `json:"token_type"`
 }
 
 func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +34,12 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Валидация входных данных
+	if req.Email == "" || req.Password == "" || req.DisplayName == "" {
+		http.Error(w, "Email, password and display name are required", http.StatusBadRequest)
 		return
 	}
 
@@ -64,8 +75,25 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Генерируем токены для нового пользователя
+	accessToken, err := middleware.GenerateAccessToken(user.ID, user.Email, h.JWTConfig)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating access token: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, h.JWTConfig)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating refresh token: %v", err), http.StatusInternalServerError)
+		return
+	}
+
 	resp := RegisterResponse{
-		UserID: user.ID,
+		UserID:       user.ID,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int64(h.JWTConfig.AccessExpiry.Seconds()),
+		TokenType:    "Bearer",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)

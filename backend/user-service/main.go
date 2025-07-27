@@ -23,10 +23,12 @@ func main() {
 	}
 
 	database := db.New()
+	jwtConfig := config.LoadJWTConfig()
 
 	// Создаем структуру с зависимостями
 	h := &handlers.Handler{
-		DB: database,
+		DB:        database,
+		JWTConfig: jwtConfig,
 	}
 
 	// Роутер
@@ -41,6 +43,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "ok")
 	})
+
 	corsHandler := func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -61,7 +64,8 @@ func main() {
 	// Роуты с зависимостями
 	mux.HandleFunc("/api/users/register", h.RegisterHandler)
 	mux.HandleFunc("/api/users/login", h.LoginHandler)
-	mux.Handle("/api/users/profile", middleware.JWTAuth(http.HandlerFunc(h.ProfileHandler)))
+	mux.HandleFunc("/api/users/refresh", h.RefreshTokenHandler)
+	mux.Handle("/api/users/profile", middleware.JWTAuth(jwtConfig)(http.HandlerFunc(h.ProfileHandler)))
 
 	// Сервер
 	srv := &http.Server{

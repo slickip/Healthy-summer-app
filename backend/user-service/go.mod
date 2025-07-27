@@ -3,7 +3,6 @@ module github.com/slickip/Healthy-summer-app/backend/user-service
 go 1.24.1
 
 require (
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	golang.org/x/crypto v0.39.0
 	gorm.io/driver/postgres v1.6.0
