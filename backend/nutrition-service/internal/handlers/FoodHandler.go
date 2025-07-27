@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -42,7 +43,12 @@ func (h *FoodHandler) CreateFood(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Логируем входящие данные
+	fmt.Printf("Received food data: Name=%s, Calories=%.2f, Proteins=%.2f, Fats=%.2f, Carbs=%.2f\n",
+		req.Name, req.CalloriesPer100g, req.Proteins, req.Fats, req.Carbs)
+
 	food := models.Foods{
+		Name:             req.Name,
 		CalloriesPer100g: req.CalloriesPer100g,
 		Proteins:         req.Proteins,
 		Fats:             req.Fats,
@@ -50,12 +56,35 @@ func (h *FoodHandler) CreateFood(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.DB.Create(&food).Error; err != nil {
+		fmt.Printf("Error creating food: %v\n", err)
 		http.Error(w, "Failed to create new food", http.StatusInternalServerError)
 		return
 	}
 
+	fmt.Printf("Created food: ID=%d, Name=%s, Calories=%.2f, Proteins=%.2f, Fats=%.2f, Carbs=%.2f\n",
+		food.ID, food.Name, food.CalloriesPer100g, food.Proteins, food.Fats, food.Carbs)
+
+	// Формируем ответ с нужными полями
+	type FoodResponse struct {
+		ID               uint    `json:"id"`
+		Name             string  `json:"name"`
+		CalloriesPer100g float32 `json:"callories_per_100g"`
+		Proteins         float32 `json:"proteins"`
+		Fats             float32 `json:"fats"`
+		Carbs            float32 `json:"carbs"`
+	}
+
+	response := FoodResponse{
+		ID:               food.ID,
+		Name:             food.Name,
+		CalloriesPer100g: food.CalloriesPer100g,
+		Proteins:         food.Proteins,
+		Fats:             food.Fats,
+		Carbs:            food.Carbs,
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(food)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *FoodHandler) ListFood(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +93,36 @@ func (h *FoodHandler) ListFood(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to retrieve foods", http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(foods)
+
+	fmt.Printf("Retrieved %d foods from database:\n", len(foods))
+	for i, food := range foods {
+		fmt.Printf("  Food[%d]: ID=%d, Name=%s, Calories=%.2f, Proteins=%.2f, Fats=%.2f, Carbs=%.2f\n",
+			i, food.ID, food.Name, food.CalloriesPer100g, food.Proteins, food.Fats, food.Carbs)
+	}
+
+	// Формируем ответ с нужными полями
+	type FoodResponse struct {
+		ID               uint    `json:"id"`
+		Name             string  `json:"name"`
+		CalloriesPer100g float32 `json:"callories_per_100g"`
+		Proteins         float32 `json:"proteins"`
+		Fats             float32 `json:"fats"`
+		Carbs            float32 `json:"carbs"`
+	}
+
+	var resp []FoodResponse
+	for _, food := range foods {
+		resp = append(resp, FoodResponse{
+			ID:               food.ID,
+			Name:             food.Name,
+			CalloriesPer100g: food.CalloriesPer100g,
+			Proteins:         food.Proteins,
+			Fats:             food.Fats,
+			Carbs:            food.Carbs,
+		})
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *FoodHandler) DeleteFood(w http.ResponseWriter, r *http.Request) {

@@ -16,12 +16,12 @@ func (Meals) TableName() string {
 }
 
 type Foods struct {
-	ID               uint    `gorm:"primaryKey"`
-	Name             string  `gorm:"type:text;not null"`
-	CalloriesPer100g float32 `gorm:"not null"`
-	Proteins         float32 `gorm:"not null"`
-	Fats             float32 `gorm:"not null"`
-	Carbs            float32 `gorm:"not null"`
+	ID               uint    `gorm:"primaryKey" json:"id"`
+	Name             string  `gorm:"type:text;not null" json:"name"`
+	CalloriesPer100g float32 `gorm:"not null" json:"callories_per_100g"`
+	Proteins         float32 `gorm:"not null" json:"proteins"`
+	Fats             float32 `gorm:"not null" json:"fats"`
+	Carbs            float32 `gorm:"not null" json:"carbs"`
 }
 
 func (Foods) TableName() string {
