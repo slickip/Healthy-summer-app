@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/slickip/Healthy-summer-app/backend/nutrition-service/internal/config"
+	"github.com/slickip/Healthy-summer-app/backend/nutrition-service/internal/db"
+	"github.com/slickip/Healthy-summer-app/backend/nutrition-service/internal/handlers"
+	"github.com/slickip/Healthy-summer-app/backend/nutrition-service/internal/middleware"
 )
 
 func main() {
@@ -18,25 +21,50 @@ func main() {
 		},
 	}
 
-	//роутер
+	database := db.New()
+
 	mux := http.NewServeMux()
 
-	//простейший эндпоинт
+	// CORS middleware
+	corsHandler := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+
+	// Handlers
+	mealHandler := &handlers.MealHandler{DB: database}
+	foodHandler := &handlers.FoodHandler{DB: database}
+	waterHandler := &handlers.WaterHandler{DB: database}
+
+	// Ping
 	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "pong from nutrition-service")
 	})
 
-	//создаем сервер
+	// Routes
+	mux.Handle("/api/meals", middleware.JWTAuth(http.HandlerFunc(mealHandler.Mealhandler)))
+	mux.Handle("/api/foods", middleware.JWTAuth(http.HandlerFunc(foodHandler.FoodHandler)))
+	mux.Handle("/api/water", middleware.JWTAuth(http.HandlerFunc(waterHandler.WaterHandler)))
+
+	// Server
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
-		Handler:      mux,
+		Handler:      corsHandler(mux),
 		ReadTimeout:  cfg.HTTPServer.Timeout,
 		WriteTimeout: cfg.HTTPServer.Timeout,
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
 	}
 
-	log.Printf("Starting server on %s", cfg.HTTPServer.Address)
+	log.Printf("Starting nutrition-service on %s", cfg.HTTPServer.Address)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed: %s", err)
 	}
