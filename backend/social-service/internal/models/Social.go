@@ -12,6 +12,8 @@ type Challanges struct {
 	StartDate       time.Time `json:"start_date"`
 	EndDate         time.Time `json:"end_date"`
 	CreatedAt       time.Time `gorm:"autoCreateTime"`
+
+	ChallangesType ChallangesTypes `gorm:"foreignKey:ChallangeTypeID"`
 }
 
 func (Challanges) TableName() string {
@@ -35,6 +37,8 @@ type ChallangeParticipants struct {
 	Progress        int       `gorm:"not null" json:"progress"`
 	Status          string    `gorm:"type:text;not null;check:status IN ('began','in_progress','achieved')" json:"status"`
 	JoinAt          time.Time `gorm:"autoCreateTime" json:"join_at"`
+
+	ChallangesType ChallangesTypes `gorm:"foreignKey:ChallangeTypeID"`
 }
 
 func (ChallangeParticipants) TableName() string {
