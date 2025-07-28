@@ -67,8 +67,22 @@ func (h *MealHandler) CreateMeal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type MealResponse struct {
+		ID          uint      `json:"id"`
+		MealTime    time.Time `json:"meal_time"`
+		Description string    `json:"description"`
+		Calories    int       `json:"calories"`
+	}
+
+	response := MealResponse{
+		ID:          meal.ID,
+		MealTime:    meal.MealTime,
+		Description: meal.Description,
+		Calories:    meal.Calories,
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(meal)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *MealHandler) ListMeal(w http.ResponseWriter, r *http.Request) {

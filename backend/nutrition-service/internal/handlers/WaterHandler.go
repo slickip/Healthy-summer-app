@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -36,33 +38,58 @@ func (h *WaterHandler) CreateWaterLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := userIDValue.(uint)
+
+	// читаем тело как []byte один раз
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// логируем сырое тело
+	fmt.Println("🔵 Raw JSON body:", string(bodyBytes))
+
+	// декодируем в структуру
 	var req struct {
 		VolumeML int    `json:"volume_ml"`
 		LoggedAt string `json:"logged_at"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
+	// ⏰ парсим дату
 	loggedAt, err := time.Parse(time.RFC3339, req.LoggedAt)
 	if err != nil {
 		http.Error(w, "Invalid logged_at format. Use RFC3339", http.StatusBadRequest)
 		return
 	}
 
-	water_log := models.WaterLogs{
+	waterLog := models.WaterLogs{
 		UserID:   userID,
 		VolumeML: req.VolumeML,
 		LoggedAt: loggedAt,
 	}
-	if err := h.DB.Create(&water_log).Error; err != nil {
+
+	if err := h.DB.Create(&waterLog).Error; err != nil {
 		http.Error(w, "Failed to create water log", http.StatusInternalServerError)
 		return
 	}
+	type WaterResponse struct {
+		ID       uint      `json:"id"`
+		VolumeML int       `json:"volume_ml"`
+		LoggedAt time.Time `json:"logged_at"`
+	}
+
+	response := WaterResponse{
+		ID:       waterLog.ID,
+		VolumeML: waterLog.VolumeML,
+		LoggedAt: waterLog.LoggedAt,
+	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(water_log)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *WaterHandler) ListWaterLog(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +107,27 @@ func (h *WaterHandler) ListWaterLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(water_log)
+	// Формируем ответ с нужными полями
+	type WaterLogResponse struct {
+		ID        uint      `json:"id"`
+		UserID    uint      `json:"user_id"`
+		VolumeML  int       `json:"volume_ml"`
+		LoggedAt  time.Time `json:"logged_at"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+
+	var resp []WaterLogResponse
+	for _, log := range water_log {
+		resp = append(resp, WaterLogResponse{
+			ID:        log.ID,
+			UserID:    log.UserID,
+			VolumeML:  log.VolumeML,
+			LoggedAt:  log.LoggedAt,
+			CreatedAt: log.CreatedAt,
+		})
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *WaterHandler) DeleteWaterLog(w http.ResponseWriter, r *http.Request) {

@@ -3,12 +3,12 @@ package models
 import "time"
 
 type Meals struct {
-	ID          uint `gorm:"primaryKey"`
-	UserID      uint `gorm:"not null"`
-	MealTime    time.Time
-	Description string    `gorm:"not null"`
-	Calories    int       `gorm:"not null"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	UserID      uint      `gorm:"not null" json:"user_id"`
+	MealTime    time.Time `json:"meal_time"`
+	Description string    `gorm:"not null" json:"description"`
+	Calories    int       `gorm:"not null" json:"calories"`
+	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 
 func (Meals) TableName() string {
@@ -29,11 +29,11 @@ func (Foods) TableName() string {
 }
 
 type WaterLogs struct {
-	ID        uint `gorm:"primaryKey"`
-	UserID    uint `gorm:"not null"`
-	VolumeML  int  `gorm:"not null"`
-	LoggedAt  time.Time
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `gorm:"not null" json:"user_id"`
+	VolumeML  int       `gorm:"not null" json:"volume_ml"`
+	LoggedAt  time.Time `json:"logged_at"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 
 func (WaterLogs) TableName() string {
