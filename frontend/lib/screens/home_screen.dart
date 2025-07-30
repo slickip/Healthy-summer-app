@@ -1,99 +1,127 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final buttonStyle = ElevatedButton.styleFrom(
-      backgroundColor: Colors.orange[700],
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-    );
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  void _showFriendsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Friends'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              TextField(
+                decoration: InputDecoration(labelText: 'Search Friends'),
+              ),
+              SizedBox(height: 10),
+              Text('Friend list loading...'), // Здесь можно список из API
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showNotificationsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Friend Requests'),
+          content: const Text('Здесь появятся входящие заявки в друзья'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.orange[50],
       appBar: AppBar(
         backgroundColor: Colors.orange[700],
+        leading: PopupMenuButton<String>(
+          icon: const Icon(Icons.menu),
+          onSelected: (value) {
+            Navigator.pushNamed(context, value);
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: '/activities',
+              child: Text('Activities'),
+            ),
+            const PopupMenuItem(value: '/meals', child: Text('Meals')),
+            const PopupMenuItem(value: '/water', child: Text('Water Log')),
+            const PopupMenuItem(value: '/foods', child: Text('Food Database')),
+            const PopupMenuItem(
+              value: '/challenge_list',
+              child: Text('Challenges'),
+            ),
+          ],
+        ),
         title: const Text(
           'Healthy Summer',
           style: TextStyle(color: Colors.white),
         ),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.local_florist, size: 80, color: Colors.orange[700]),
-              const SizedBox(height: 20),
-              Text(
-                'Welcome to Healthy Summer!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange[700],
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Track your health, stay active, and enjoy summer!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 30),
-
-              // Activities
-              ElevatedButton.icon(
-                style: buttonStyle,
-                icon: const Icon(Icons.directions_run),
-                label: const Text('Activities'),
-                onPressed: () => Navigator.pushNamed(context, '/activities'),
-              ),
-              const SizedBox(height: 12),
-
-              // Meals
-              ElevatedButton.icon(
-                style: buttonStyle,
-                icon: const Icon(Icons.restaurant_menu),
-                label: const Text('Meals'),
-                onPressed: () => Navigator.pushNamed(context, '/meals'),
-              ),
-              const SizedBox(height: 12),
-
-              // Water
-              ElevatedButton.icon(
-                style: buttonStyle,
-                icon: const Icon(Icons.water_drop),
-                label: const Text('Water Log'),
-                onPressed: () => Navigator.pushNamed(context, '/water'),
-              ),
-              const SizedBox(height: 12),
-
-              // Foods
-              ElevatedButton.icon(
-                style: buttonStyle,
-                icon: const Icon(Icons.fastfood),
-                label: const Text('Food Database'),
-                onPressed: () => Navigator.pushNamed(context, '/foods'),
-              ),
-              const SizedBox(height: 12),
-
-              // Stats placeholder
-              ElevatedButton.icon(
-                style: buttonStyle,
-                icon: const Icon(Icons.bar_chart),
-                label: const Text('Statistics (coming soon)'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Statistics feature in progress...'),
-                    ),
-                  );
-                },
-              ),
-            ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people_alt),
+            onPressed: _showFriendsDialog,
           ),
-        ),
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: _showNotificationsDialog,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          const SizedBox(height: 16),
+          Text(
+            'Friends Activity Feed',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: const [
+                Card(
+                  child: ListTile(title: Text('Friend A completed a workout')),
+                ),
+                Card(
+                  child: ListTile(title: Text('Friend B drank 2L of water')),
+                ),
+                Card(
+                  child: ListTile(title: Text('Friend C joined a challenge')),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

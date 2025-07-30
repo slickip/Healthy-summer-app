@@ -11,6 +11,11 @@ import 'screens/nutrition_service_screens/add_water_screen.dart';
 import 'screens/nutrition_service_screens/foods_screen.dart';
 import 'screens/nutrition_service_screens/meal_screen.dart';
 import 'screens/nutrition_service_screens/water_screen.dart';
+import 'screens/social_service_screens/messages_screen.dart';
+import 'screens/social_service_screens/challenge_detail_screen.dart';
+import 'screens/social_service_screens/challenge_list_screen.dart';
+import 'screens/social_service_screens/create_challenge_screen.dart';
+import 'screens/social_service_screens/friends_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,6 +43,11 @@ class MyApp extends StatelessWidget {
         '/add_water': (context) => const AddWaterScreen(),
         '/foods': (context) => const FoodsScreen(),
         '/add_food': (context) => const AddFoodScreen(),
+        '/friends': (context) => const FriendsScreen(),
+        '/messages': (context) => const MessagesScreen(),
+        '/challenge_list': (context) => const ChallengeListScreen(),
+        '/challenge_detail': (context) => const ChallengeDetailScreen(),
+        '/create_challenge': (context) => const CreateChallengeScreen(),
       },
     );
   }

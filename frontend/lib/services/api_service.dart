@@ -445,4 +445,97 @@ class ApiService {
 
     return response.statusCode == 204;
   }
+
+  Future<List<dynamic>?> getChallenges() async {
+    final token = await _getAccessToken();
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/challenges'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 200 ? jsonDecode(response.body) : null;
+  }
+
+  Future<bool> joinChallenge(int id) async {
+    final token = await _getAccessToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/challenges/join'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'challenge_id': id}),
+    );
+    return response.statusCode == 201;
+  }
+
+  Future<List<dynamic>?> getChallengeLeaderboard(int id) async {
+    final token = await _getAccessToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/challenges/leaderboard?id=$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 200 ? jsonDecode(response.body) : null;
+  }
+
+  Future<List<dynamic>?> getFriendsFeed() async {
+    final token = await _getAccessToken();
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/social/feed/friends'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 200 ? jsonDecode(response.body) : null;
+  }
+
+  Future<List<dynamic>?> getMessages(int friendId) async {
+    final token = await _getAccessToken();
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/messages?friend_id=$friendId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 200 ? jsonDecode(response.body) : null;
+  }
+
+  Future<bool> sendMessage(int friendId, String content) async {
+    final token = await _getAccessToken();
+    if (token == null) return false;
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/messages'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'receiver_id': friendId, 'content': content}),
+    );
+    return response.statusCode == 201;
+  }
+
+  Future<bool> createChallenge({
+    required String title,
+    required String description,
+    required int goalValue,
+  }) async {
+    final token = await _getAccessToken();
+    if (token == null) return false;
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/challenges'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'title': title,
+        'description': description,
+        'goal_value': goalValue,
+      }),
+    );
+    return response.statusCode == 201;
+  }
 }
