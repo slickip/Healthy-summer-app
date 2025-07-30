@@ -51,3 +51,14 @@ type Achievement struct {
 func (Achievement) TableName() string {
 	return "achievements"
 }
+
+type Friend struct {
+	ID        uint `gorm:"primaryKey"`
+	UserID    uint `gorm:"not null"`
+	FriendID  uint `gorm:"not null"`
+	CreatedAt time.Time
+}
+
+func (Friend) TableName() string {
+	return "friends"
+}
