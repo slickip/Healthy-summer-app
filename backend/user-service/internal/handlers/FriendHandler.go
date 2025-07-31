@@ -79,8 +79,21 @@ func (h *Handler) SendFriendRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to send request", http.StatusInternalServerError)
 		return
 	}
-
-	json.NewEncoder(w).Encode(request)
+	type FriendRequestResponse struct {
+		ID        uint      `json:"id"`
+		SenderID  uint      `json:"sender_id"`
+		RequestID uint      `json:"request_id"`
+		Status    string    `json:"status"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+	resp := FriendRequestResponse{
+		ID:        request.ID,
+		SenderID:  request.SenderID,
+		RequestID: request.RequestID,
+		Status:    request.Status,
+		CreatedAt: request.CreatedAt,
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *Handler) HandleFriendRequest(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +137,21 @@ func (h *Handler) HandleFriendRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(fr)
+	type FriendRequestResponse struct {
+		ID        uint      `json:"id"`
+		SenderID  uint      `json:"sender_id"`
+		RequestID uint      `json:"request_id"`
+		Status    string    `json:"status"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+	resp := FriendRequestResponse{
+		ID:        fr.ID,
+		SenderID:  fr.SenderID,
+		RequestID: fr.RequestID,
+		Status:    fr.Status,
+		CreatedAt: fr.CreatedAt,
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *Handler) GetIncomingRequests(w http.ResponseWriter, r *http.Request) {
@@ -141,8 +168,24 @@ func (h *Handler) GetIncomingRequests(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error fetching", http.StatusInternalServerError)
 		return
 	}
-
-	json.NewEncoder(w).Encode(requests)
+	type FriendRequestResponse struct {
+		ID        uint      `json:"id"`
+		SenderID  uint      `json:"sender_id"`
+		RequestID uint      `json:"request_id"`
+		Status    string    `json:"status"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+	var resp []FriendRequestResponse
+	for _, fr := range requests {
+		resp = append(resp, FriendRequestResponse{
+			ID:        fr.ID,
+			SenderID:  fr.SenderID,
+			RequestID: fr.RequestID,
+			Status:    fr.Status,
+			CreatedAt: fr.CreatedAt,
+		})
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *Handler) GetFriendsList(w http.ResponseWriter, r *http.Request) {
@@ -168,6 +211,34 @@ func (h *Handler) GetFriendsList(w http.ResponseWriter, r *http.Request) {
 	if len(friendIDs) > 0 {
 		h.DB.Where("id IN ?", friendIDs).Find(&friends)
 	}
+	type UserResponse struct {
+		ID          uint      `json:"id"`
+		Email       string    `json:"email"`
+		DisplayName string    `json:"display_name"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+	}
+	var resp []UserResponse
+	for _, u := range friends {
+		resp = append(resp, UserResponse{
+			ID:          u.ID,
+			Email:       u.Email,
+			DisplayName: u.DisplayName,
+			CreatedAt:   u.CreatedAt,
+			UpdatedAt:   u.UpdatedAt,
+		})
+	}
+	json.NewEncoder(w).Encode(resp)
+}
 
-	json.NewEncoder(w).Encode(friends)
+func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		http.Error(w, "Query required", http.StatusBadRequest)
+		return
+	}
+	var users []models.User
+	h.DB.Where("display_name ILIKE ? OR email ILIKE ?", "%"+query+"%", "%"+query+"%").
+		Limit(10).Find(&users)
+	json.NewEncoder(w).Encode(users)
 }

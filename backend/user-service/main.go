@@ -67,6 +67,7 @@ func main() {
 	mux.HandleFunc("/api/users/refresh", h.RefreshTokenHandler)
 	mux.Handle("/api/users/profile", middleware.JWTAuth(jwtConfig)(http.HandlerFunc(h.ProfileHandler)))
 	mux.Handle("/api/friends/", middleware.JWTAuth(jwtConfig)(http.HandlerFunc(h.FriendHandler)))
+	mux.Handle("/api/users/search", middleware.JWTAuth(jwtConfig)(http.HandlerFunc(h.SearchUsers)))
 
 	// Сервер
 	srv := &http.Server{
