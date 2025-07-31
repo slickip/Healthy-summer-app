@@ -46,26 +46,57 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Challenge')),
+      backgroundColor: Colors.orange[50],
+      appBar: AppBar(
+        backgroundColor: Colors.orange[700],
+        title: const Text(
+          'Create Challenge',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: _goalValueController,
-              decoration: const InputDecoration(labelText: 'Goal Value'),
+              decoration: const InputDecoration(
+                labelText: 'Goal Value',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(),
+              ),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: submit, child: const Text('Create')),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange[700],
+              ),
+              onPressed: submit,
+              icon: const Icon(Icons.check),
+              label: const Text('Create'),
+            ),
           ],
         ),
       ),

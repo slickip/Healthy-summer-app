@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -8,26 +12,162 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final ApiService api = ApiService();
+  final storage = const FlutterSecureStorage();
+
+  List<dynamic> searchResults = [];
+  bool isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  List<dynamic> friends = [];
+  List<dynamic> requests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadFriends();
+    loadRequests();
+  }
+
+  Future<void> loadFriends() async {
+    final result = await api.getFriendsList();
+    if (result != null) {
+      setState(() {
+        friends = result;
+      });
+    }
+  }
+
+  Future<void> loadRequests() async {
+    final result = await api.getIncomingRequests();
+    if (result != null) {
+      setState(() {
+        requests = result;
+      });
+    }
+  }
+
+  Future<void> respondToRequest(int requestId, String action) async {
+    final success = await api.respondToRequest(requestId, action);
+    if (success) {
+      loadRequests();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Request ${action}ed')));
+    }
+  }
+
+  void _logout() async {
+    await api.logout();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   void _showFriendsDialog() {
+    void searchUser() async {
+      final query = _searchController.text;
+      if (query.isEmpty) return;
+
+      final result = await api.searchAllUsers(query);
+      if (result != null) {
+        setState(() {
+          searchResults = result;
+          isSearching = true;
+        });
+      }
+    }
+
+    void sendFriendRequest(int userId) async {
+      final success = await api.sendFriendRequest(userId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(success ? 'Request sent' : 'Failed to send')),
+      );
+    }
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Friends'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              TextField(
-                decoration: InputDecoration(labelText: 'Search Friends'),
-              ),
-              SizedBox(height: 10),
-              Text('Friend list loading...'), // Здесь можно список из API
-            ],
+          backgroundColor: Colors.orange[50],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Friends', style: TextStyle(color: Colors.orange)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Search user',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: searchUser,
+                    ),
+                  ),
+                  onSubmitted: (_) => searchUser(),
+                ),
+                const SizedBox(height: 10),
+                if (isSearching)
+                  searchResults.isEmpty
+                      ? const Text('This user was not found')
+                      : SizedBox(
+                          height: 300,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: searchResults.length,
+                            itemBuilder: (context, index) {
+                              final user = searchResults[index];
+                              return ListTile(
+                                title: Text(
+                                  user['display_name'] ?? 'User ${user['id']}',
+                                ),
+                                subtitle: Text(user['email'] ?? ''),
+                                trailing: ElevatedButton(
+                                  onPressed: () =>
+                                      sendFriendRequest(user['id']),
+                                  child: const Text('Add'),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                else
+                  friends.isEmpty
+                      ? const Text('No friends yet')
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: friends.length,
+                          itemBuilder: (context, index) {
+                            final friend = friends[index];
+                            return ListTile(
+                              leading: const Icon(Icons.person),
+                              title: Text(
+                                friend['display_name'] ??
+                                    'User ${friend['id']}',
+                              ),
+                              subtitle: Text(friend['email'] ?? ''),
+                            );
+                          },
+                        ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              onPressed: () {
+                setState(() {
+                  isSearching = false;
+                  searchResults = [];
+                });
+                Navigator.pop(context);
+              },
+              child: const Text(
+                'Close',
+                style: TextStyle(color: Colors.orange),
+              ),
             ),
           ],
         );
@@ -40,12 +180,60 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Friend Requests'),
-          content: const Text('Здесь появятся входящие заявки в друзья'),
+          backgroundColor: Colors.orange[50],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Friend Requests',
+            style: TextStyle(color: Colors.orange),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: requests.isEmpty
+                ? const Text('No incoming requests')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      final req = requests[index];
+                      final sender = req['sender'];
+                      final displayName = sender != null
+                          ? sender['display_name'] ?? 'User ${req['sender_id']}'
+                          : 'User ${req['sender_id']}';
+                      final email = sender != null ? sender['email'] ?? '' : '';
+                      return ListTile(
+                        title: Text(displayName),
+                        subtitle: Text(email),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.check,
+                                color: Colors.green,
+                              ),
+                              onPressed: () =>
+                                  respondToRequest(req['id'], 'accept'),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              onPressed: () =>
+                                  respondToRequest(req['id'], 'decline'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: Colors.orange),
+              ),
             ),
           ],
         );
@@ -60,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.orange[700],
         leading: PopupMenuButton<String>(
-          icon: const Icon(Icons.menu),
+          icon: const Icon(Icons.menu, color: Colors.white),
           onSelected: (value) {
             Navigator.pushNamed(context, value);
           },
@@ -84,12 +272,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people_alt),
+            icon: const Icon(Icons.people, color: Colors.white),
             onPressed: _showFriendsDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications, color: Colors.white),
             onPressed: _showNotificationsDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _logout,
           ),
         ],
       ),

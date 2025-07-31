@@ -34,22 +34,33 @@ class _ChallengeListScreenState extends State<ChallengeListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Challenges')),
+      backgroundColor: Colors.orange[50],
+      appBar: AppBar(
+        backgroundColor: Colors.orange[700],
+        title: const Text('Challenges', style: TextStyle(color: Colors.white)),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/create_challenge'),
+        backgroundColor: Colors.orange[700],
         child: const Icon(Icons.add),
       ),
       body: challenges.isEmpty
-          ? const Center(child: Text('No challenges found.'))
+          ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
               itemCount: challenges.length,
               itemBuilder: (context, index) {
                 final challenge = challenges[index];
-                return ListTile(
-                  title: Text(challenge['title']),
-                  subtitle: Text(challenge['description']),
-                  trailing: const Icon(Icons.arrow_forward),
-                  onTap: () => goToDetail(challenge),
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: ListTile(
+                    title: Text(challenge['title']),
+                    subtitle: Text(challenge['description']),
+                    trailing: const Icon(Icons.arrow_forward),
+                    onTap: () => goToDetail(challenge),
+                  ),
                 );
               },
             ),

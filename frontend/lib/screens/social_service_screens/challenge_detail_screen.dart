@@ -43,7 +43,14 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(challenge?['title'] ?? 'Challenge Detail')),
+      backgroundColor: Colors.orange[50],
+      appBar: AppBar(
+        backgroundColor: Colors.orange[700],
+        title: Text(
+          challenge?['title'] ?? 'Challenge',
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -54,26 +61,34 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            ElevatedButton.icon(
+              icon: const Icon(Icons.flag),
+              label: const Text('Join Challenge'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange[700],
+              ),
               onPressed: joinChallenge,
-              child: const Text('Join Challenge'),
             ),
             const SizedBox(height: 16),
             const Text(
               'Leaderboard:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
             Expanded(
-              child: ListView.builder(
-                itemCount: leaderboard.length,
-                itemBuilder: (context, index) {
-                  final entry = leaderboard[index];
-                  return ListTile(
-                    title: Text('User ID: ${entry['user_id']}'),
-                    trailing: Text('${entry['progress']} pts'),
-                  );
-                },
-              ),
+              child: leaderboard.isEmpty
+                  ? const Text('No participants yet.')
+                  : ListView.builder(
+                      itemCount: leaderboard.length,
+                      itemBuilder: (context, index) {
+                        final entry = leaderboard[index];
+                        return ListTile(
+                          leading: CircleAvatar(child: Text('${index + 1}')),
+                          title: Text('User ID: ${entry['user_id']}'),
+                          trailing: Text('${entry['progress']} pts'),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
