@@ -39,6 +39,13 @@ func (h *Handler) FriendHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
 
+	case "/api/users/search":
+		if r.Method == http.MethodGet {
+			h.SearchAllUsers(w, r)
+		} else {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+
 	default:
 		http.Error(w, "Not Found", http.StatusNotFound)
 	}
@@ -233,12 +240,69 @@ func (h *Handler) GetFriendsList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
-	if query == "" {
-		http.Error(w, "Query required", http.StatusBadRequest)
+	ctx := r.Context()
+	userIDValue := ctx.Value(middleware.ContextUserIDKey)
+	if query == "" || userIDValue == nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	userID := userIDValue.(uint)
+
 	var users []models.User
-	h.DB.Where("display_name ILIKE ? OR email ILIKE ?", "%"+query+"%", "%"+query+"%").
+	subQuery := h.DB.
+		Table("friends_requests").
+		Select("request_id").
+		Where("sender_id = ? AND status IN ('pending', 'accepted')", userID)
+
+	h.DB.
+		Where("id != ? AND id NOT IN (?)", userID, subQuery).
+		Where("display_name ILIKE ? OR email ILIKE ?", "%"+query+"%", "%"+query+"%").
 		Limit(10).Find(&users)
-	json.NewEncoder(w).Encode(users)
+
+	type UserSearchResponse struct {
+		ID          uint   `json:"id"`
+		DisplayName string `json:"display_name"`
+		Email       string `json:"email"`
+	}
+
+	var resp []UserSearchResponse
+	for _, u := range users {
+		resp = append(resp, UserSearchResponse{
+			ID:          u.ID,
+			DisplayName: u.DisplayName,
+			Email:       u.Email,
+		})
+	}
+
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) SearchAllUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	var users []models.User
+	h.DB.
+		Where("display_name ILIKE ? OR email ILIKE ?", "%"+query+"%", "%"+query+"%").
+		Limit(20).Find(&users)
+
+	type UserSearchResponse struct {
+		ID          uint   `json:"id"`
+		DisplayName string `json:"display_name"`
+		Email       string `json:"email"`
+	}
+
+	var resp []UserSearchResponse
+	for _, u := range users {
+		resp = append(resp, UserSearchResponse{
+			ID:          u.ID,
+			DisplayName: u.DisplayName,
+			Email:       u.Email,
+		})
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
